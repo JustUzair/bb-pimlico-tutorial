@@ -3,7 +3,7 @@ import { appendFileSync, writeFileSync } from "fs";
 import { toSafeSmartAccount } from "permissionless/accounts";
 import { Hex, createPublicClient, defineChain, getContract, http } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
-// import { polygon } from "viem/chains";
+import { polygon } from "viem/chains";
 import { createPimlicoClient } from "permissionless/clients/pimlico";
 import {
   createBundlerClient,
@@ -18,30 +18,6 @@ import { encodeFunctionData, parseAbiItem } from "viem";
 
 const apiKey = process.env.PIMLICO_API_KEY;
 if (!apiKey) throw new Error("Missing PIMLICO_API_KEY");
-
-const polygon = /*#__PURE__*/ defineChain({
-  id: 137,
-  name: "Polygon",
-  nativeCurrency: { name: "MATIC", symbol: "MATIC", decimals: 18 },
-  rpcUrls: {
-    default: {
-      http: ["https://rpc.dev.buildbear.io/national-scarletwitch-c11333f2"],
-    },
-  },
-  blockExplorers: {
-    default: {
-      name: "PolygonScan",
-      url: "https://explorer.dev.buildbear.io/national-scarletwitch-c11333f2",
-      //   apiUrl: "https://api.polygonscan.com/api",
-    },
-  },
-  contracts: {
-    multicall3: {
-      address: "0xca11bde05977b3631167028862be2a173976ca11",
-      blockCreated: 25770160,
-    },
-  },
-});
 
 const privateKey = (process.env.PRIVATE_KEY as Hex)
   ? (process.env.PRIVATE_KEY as Hex)
