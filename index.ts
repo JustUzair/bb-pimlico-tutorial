@@ -21,7 +21,7 @@ const apiKey = process.env.PIMLICO_API_KEY;
 const pimlicoUrl = `https://api.pimlico.io/v2/137/rpc?apikey=${apiKey}`; // @>>> Get the api key and rpc from pimlico dashboard
 
 const buildbearSandboxUrl =
-  "https://rpc.dev.buildbear.io/national-scarletwitch-c11333f2";
+  "https://rpc.dev.buildbear.io/rival-deadpool-e1ac7a6e";
 if (!apiKey) throw new Error("Missing PIMLICO_API_KEY");
 export const BBSandboxNetwork = /*#__PURE__*/ defineChain({
   id: 137,
@@ -29,15 +29,14 @@ export const BBSandboxNetwork = /*#__PURE__*/ defineChain({
   nativeCurrency: { name: "MATIC", symbol: "MATIC", decimals: 18 },
   rpcUrls: {
     default: {
-      http: ["https://rpc.dev.buildbear.io/national-scarletwitch-c11333f2"],
+      http: ["https://rpc.dev.buildbear.io/rival-deadpool-e1ac7a6e"],
     },
   },
   blockExplorers: {
     default: {
       name: "BB National Scarletwitch Scan",
-      url: "https://explorer.dev.buildbear.io/national-scarletwitch-c11333f2",
-      apiUrl:
-        "https://https://api.dev.buildbear.io/national-scarletwitch-c11333f2/api",
+      url: "https://explorer.dev.buildbear.io/rival-deadpool-e1ac7a6e",
+      apiUrl: "https://api.dev.buildbear.io/rival-deadpool-e1ac7a6e/api",
     },
   },
 });
@@ -79,7 +78,7 @@ const account = await toSafeSmartAccount({
 console.log("\n\n====================================");
 console.log("====================================");
 console.log(
-  `Smart account address: https://explorer.dev.buildbear.io/national-scarletwitch-c11333f2/address/${account.address}`
+  `Smart account address: https://explorer.dev.buildbear.io/rival-deadpool-e1ac7a6e/address/${account.address}`
 );
 console.log("====================================");
 console.log("====================================");
@@ -94,7 +93,7 @@ const smartAccountClient = createSmartAccountClient({
   account,
   chain: BBSandboxNetwork,
   bundlerTransport: http(buildbearSandboxUrl), //sending the tx to buildbear
-  paymaster: pimlicoClient,
+  // paymaster: pimlicoClient,
   // userOperation: {
   //   estimateFeesPerGas: async () => {
   //     return (await pimlicoClient.getUserOperationGasPrice()).fast;
@@ -103,10 +102,8 @@ const smartAccountClient = createSmartAccountClient({
 });
 
 const txHash = await smartAccountClient.sendUserOperation({
-  sender: "0x5a6b47F4131bf1feAFA56A05573314BcF44C9149",
-  nonce: getBigInt(
-    "0x845ADB2C711129D4F3966735ED98A9F09FC4CE5700000000000000000000"
-  ),
+  sender: account.address,
+  nonce: await smartAccountClient.account.getNonce(),
   factory: "0xd703aaE79538628d27099B8c4f621bE4CCd142d5",
   factoryData:
     "0xc5265d5d000000000000000000000000aac5d4240af87249b3f71bc8e4a2cae074a3e4190000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001243c3b752b01845ADb2C711129d4f3966735eD98a9F09fC4cE570000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000e000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000014375d883Cb4afb913aC35c4B394468C4bC73d77C40000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
@@ -126,5 +123,5 @@ const txHash = await smartAccountClient.sendUserOperation({
 });
 
 console.log(
-  `User operation included: https://explorer.dev.buildbear.io/national-scarletwitch-c11333f2/tx/${txHash}`
+  `User operation included: https://explorer.dev.buildbear.io/rival-deadpool-e1ac7a6e/tx/${txHash}`
 );
