@@ -32,7 +32,7 @@ export const BBSandboxNetwork = /*#__PURE__*/ defineChain({
   },
   blockExplorers: {
     default: {
-      name: "BB National Scarletwitch Scan",
+      name: "BB Rival Deadpool Scan",
       url: "https://explorer.dev.buildbear.io/rival-deadpool-e1ac7a6e",
       apiUrl: "https://api.dev.buildbear.io/rival-deadpool-e1ac7a6e/api",
     },
