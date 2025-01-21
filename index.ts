@@ -1,30 +1,21 @@
 import "dotenv/config";
-import { appendFileSync, writeFileSync } from "fs";
+import { appendFileSync } from "fs";
 import { toSafeSmartAccount } from "permissionless/accounts";
-import {
-  Hex,
-  createPublicClient,
-  defineChain,
-  formatEther,
-  getContract,
-  http,
-} from "viem";
+import { Hex, createPublicClient, defineChain, formatEther, http } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
-
 import { createPimlicoClient } from "permissionless/clients/pimlico";
-
 import { entryPoint07Address } from "viem/account-abstraction";
 import { createSmartAccountClient } from "permissionless";
-
 import { ethers } from "ethers";
+import { exit } from "process";
 
 const buildbearSandboxUrl =
-  "https://rpc.dev.buildbear.io/rival-deadpool-e1ac7a6e";
+  "https://rpc.buildbear.io/parliamentary-katebishop-6df91ec9";
 
-export const BBSandboxNetwork = /*#__PURE__*/ defineChain({
-  id: 11367,
-  name: "BB",
-  nativeCurrency: { name: "MATIC", symbol: "MATIC", decimals: 18 },
+const BBSandboxNetwork = /*#__PURE__*/ defineChain({
+  id: 23177, // IMPORTANT : replace this with your sandbox's chain id
+  name: "BuildBear x Polygon Mainnet Sandbox", // name your network
+  nativeCurrency: { name: "MATIC", symbol: "MATIC", decimals: 18 }, // native currency of forked network
   rpcUrls: {
     default: {
       http: [buildbearSandboxUrl],
@@ -32,9 +23,9 @@ export const BBSandboxNetwork = /*#__PURE__*/ defineChain({
   },
   blockExplorers: {
     default: {
-      name: "BB Rival Deadpool Scan",
-      url: "https://explorer.dev.buildbear.io/rival-deadpool-e1ac7a6e",
-      apiUrl: "https://api.dev.buildbear.io/rival-deadpool-e1ac7a6e/api",
+      name: "BuildBear x Polygon Mainnet Scan", // block explorer for network
+      url: "https://explorer.buildbear.io/parliamentary-katebishop-6df91ec9",
+      apiUrl: "https://api.buildbear.io/parliamentary-katebishop-6df91ec9/api",
     },
   },
 });
@@ -75,7 +66,6 @@ const smartAccountClient = createSmartAccountClient({
   account,
   chain: BBSandboxNetwork,
   bundlerTransport: http(buildbearSandboxUrl), //sending the tx to buildbear
-  // paymaster: pimlicoClient,
   userOperation: {
     estimateFeesPerGas: async () => {
       return (await pimlicoClient.getUserOperationGasPrice()).fast;
@@ -85,7 +75,20 @@ const smartAccountClient = createSmartAccountClient({
 
 let balance = await publicClient.getBalance({ address: account.address }); // Get the balance of the sender
 
-console.log("Balance before transaction: ", formatEther(balance));
+if (+balance.toString() <= 0) {
+  console.log("====================================");
+  console.log(
+    `⚠️⚠️Fund your Account with your BuildBear Sandbox Faucet and try running the script again.\nSmart Account Address: ${account.address}`
+  );
+  console.log("====================================");
+  exit();
+} else {
+  console.log("====================================");
+  console.log(`Smart Account Address: ${account.address}`);
+  console.log("====================================");
+}
+
+console.log("🟠Balance before transaction: ", formatEther(balance));
 
 const txHash = await smartAccountClient.sendTransaction({
   to: "0xd8da6bf26964af9d7eed9e03e53415d37aa96045",
@@ -94,9 +97,9 @@ const txHash = await smartAccountClient.sendTransaction({
 });
 
 console.log(
-  `User operation included: https://explorer.dev.buildbear.io/rival-deadpool-e1ac7a6e/tx/${txHash}`
+  `🟢User operation included: https://explorer.buildbear.io/parliamentary-katebishop-6df91ec9/tx/${txHash}`
 );
 
 balance = await publicClient.getBalance({ address: account.address }); // Get the balance of the sender
 
-console.log("Balance after transaction: ", formatEther(balance));
+console.log("🟠Balance after transaction: ", formatEther(balance));
