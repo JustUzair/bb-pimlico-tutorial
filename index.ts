@@ -192,7 +192,10 @@ async function actionGetSupportedEntryPoints() {
 
   console.log(`🟢 Supported Entrypoints:`, result.join(", "));
 }
-// async function functionName() {}
+async function actionGetUserOpGasPrice() {
+  let userOpGasPrice = await pimlicoClient.getUserOperationGasPrice();
+  console.log(`🟢User operation Gas Price\n`, userOpGasPrice);
+}
 
 // async function functionName() {}
 
@@ -217,13 +220,14 @@ if (process.argv[2] == "--send-transaction") {
 } else if (process.argv[2] == "--get-supported-entrypoints") {
   await actionGetSupportedEntryPoints();
   exit();
+} else if (process.argv[2] == "--get-userOp-gasPrice") {
+  await actionGetUserOpGasPrice();
+  exit();
 }
 
 /* TODO
 
 
-
-eth_supportedEntryPoints
 
 pimlico_sendCompressedUserOperation
 
