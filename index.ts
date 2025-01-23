@@ -4,9 +4,13 @@ import { toSafeSmartAccount } from "permissionless/accounts";
 import { Hex, createPublicClient, defineChain, formatEther, http } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { createPimlicoClient } from "permissionless/clients/pimlico";
-import { entryPoint07Address } from "viem/account-abstraction";
+import {
+  createBundlerClient,
+  entryPoint07Address,
+  toCoinbaseSmartAccount,
+} from "viem/account-abstraction";
 import { createSmartAccountClient } from "permissionless";
-import { ethers } from "ethers";
+import { ethers, parseEther } from "ethers";
 import { exit } from "process";
 
 const buildbearSandboxUrl =
@@ -88,18 +92,104 @@ if (+balance.toString() <= 0) {
   console.log("====================================");
 }
 
-console.log("🟠Balance before transaction: ", formatEther(balance));
+async function actionSendTransaction() {
+  await printBalanceBefore();
 
-const txHash = await smartAccountClient.sendTransaction({
-  to: "0xd8da6bf26964af9d7eed9e03e53415d37aa96045",
-  value: ethers.parseEther("1"),
-  data: "0x",
-});
+  const txHash = await smartAccountClient.sendTransaction({
+    to: "0xd8da6bf26964af9d7eed9e03e53415d37aa96045",
+    value: parseEther("1"),
+    data: "0x",
+  });
 
-console.log(
-  `🟢User operation included: https://explorer.buildbear.io/parliamentary-katebishop-6df91ec9/tx/${txHash}`
-);
+  console.log(
+    `🟢User operation included: https://explorer.buildbear.io/parliamentary-katebishop-6df91ec9/tx/${txHash}`
+  );
+  await printBalanceAfter();
+}
 
-balance = await publicClient.getBalance({ address: account.address }); // Get the balance of the sender
+async function actionSendUserOp() {
+  // const account = await toCoinbaseSmartAccount({
+  //   client: publicClient,
+  //   owners: [signer],
+  // });
+  // const smartAccountClient = createBundlerClient({
+  //   account,
+  //   client: publicClient,
+  //   transport: http(buildbearSandboxUrl), //sending the tx to buildbear
+  // });
 
-console.log("🟠Balance after transaction: ", formatEther(balance));
+  await printBalanceBefore();
+  const txHash = await smartAccountClient.sendUserOperation({
+    account,
+    calls: [
+      {
+        to: "0xd8da6bf26964af9d7eed9e03e53415d37aa96045",
+        value: parseEther("1"),
+      },
+    ],
+  });
+
+  let result = await smartAccountClient.waitForUserOperationReceipt({
+    hash: txHash,
+  });
+
+  console.log(
+    `🟢User operation included: https://explorer.buildbear.io/parliamentary-katebishop-6df91ec9/tx/${result.receipt.transactionHash}`
+  );
+  await printBalanceAfter();
+}
+
+async function actionEstimateUserOpGas() {}
+// async function functionName() {}
+// async function functionName() {}
+// async function functionName() {}
+
+// async function functionName() {}
+
+// console.log("====================================");
+// console.log(process.argv);
+// console.log("====================================");
+if (process.argv[2] == "--send-transaction") {
+  await actionSendTransaction();
+  exit();
+} else if (process.argv[2] == "--send-userOp") {
+  await actionSendUserOp();
+  exit();
+} else if (process.argv[2] == "--estimate-userOp-gas") {
+  await actionEstimateUserOpGas();
+  exit();
+}
+
+/* TODO
+eth_sendUserOperation 🔸
+
+eth_estimateUserOperationGas 
+
+eth_getUserOperationReceipt
+
+eth_getUserOperationByHash
+
+eth_supportedEntryPoints
+
+pimlico_sendCompressedUserOperation
+
+pimlico_getUserOperationGasPrice
+
+pimlico_getUserOperationStatus
+*/
+
+// Helper Funciton
+
+async function getBalance(): Promise<bigint> {
+  let balance = await publicClient.getBalance({ address: account.address });
+  return balance;
+}
+async function printBalanceBefore() {
+  let balance = await getBalance();
+  console.log("🟠Balance before transaction: ", formatEther(balance));
+}
+
+async function printBalanceAfter() {
+  let balance = await getBalance();
+  console.log("🟠Balance after transaction: ", formatEther(balance));
+}
