@@ -9,8 +9,12 @@ npm start
 
 # How to use smart account actions
 
+Run the script with `npm start` and use the flags below to carry out a smart account action
+
 - Use the flags:
   - `-- --send-transaction`
   - `-- --send-userOp`
   - `-- --estimate-userOp-gas`
   - `-- --get-userOp-receipt`
+  - `--get-userOp-by-hash`
+  - `--get-supported-entrypoints`

@@ -187,7 +187,11 @@ async function actionGetUserOpByHash() {
   });
   console.log(`🟢User operation Result\n`, userOperationResult);
 }
-// async function functionName() {}
+async function actionGetSupportedEntryPoints() {
+  let result = await smartAccountClient.getSupportedEntryPoints();
+
+  console.log(`🟢 Supported Entrypoints:`, result.join(", "));
+}
 // async function functionName() {}
 
 // async function functionName() {}
@@ -210,12 +214,14 @@ if (process.argv[2] == "--send-transaction") {
 } else if (process.argv[2] == "--get-userOp-by-hash") {
   await actionGetUserOpByHash();
   exit();
+} else if (process.argv[2] == "--get-supported-entrypoints") {
+  await actionGetSupportedEntryPoints();
+  exit();
 }
 
 /* TODO
 
 
-eth_getUserOperationByHash
 
 eth_supportedEntryPoints
 
