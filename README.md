@@ -19,3 +19,4 @@ Run the script with `npm start` and use the flags below to carry out a smart acc
   - `--get-userOp-by-hash`
   - `--get-supported-entrypoints`
   - `--get-userOp-gasPrice`
+  - `--get-userOp-status`

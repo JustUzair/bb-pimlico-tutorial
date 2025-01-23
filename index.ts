@@ -196,6 +196,28 @@ async function actionGetUserOpGasPrice() {
   let userOpGasPrice = await pimlicoClient.getUserOperationGasPrice();
   console.log(`🟢User operation Gas Price\n`, userOpGasPrice);
 }
+async function actionGetUserOpStatus() {
+  const txHash = await smartAccountClient.sendUserOperation({
+    account,
+    calls: [
+      {
+        to: "0xd8da6bf26964af9d7eed9e03e53415d37aa96045",
+        value: parseEther("1"),
+      },
+    ],
+  });
+  let userOpStatus = await pimlicoClient.getUserOperationStatus({
+    hash: txHash,
+  });
+  console.log(`🟠User operation status\n`, userOpStatus);
+  await smartAccountClient.waitForUserOperationReceipt({
+    hash: txHash,
+  });
+  userOpStatus = await pimlicoClient.getUserOperationStatus({
+    hash: txHash,
+  });
+  console.log(`🟢User operation status\n`, userOpStatus);
+}
 
 // async function functionName() {}
 
@@ -223,17 +245,14 @@ if (process.argv[2] == "--send-transaction") {
 } else if (process.argv[2] == "--get-userOp-gasPrice") {
   await actionGetUserOpGasPrice();
   exit();
+} else if (process.argv[2] == "--get-userOp-status") {
+  await actionGetUserOpStatus();
+  exit();
 }
 
 /* TODO
-
-
-
 pimlico_sendCompressedUserOperation
 
-pimlico_getUserOperationGasPrice
-
-pimlico_getUserOperationStatus
 */
 
 // Helper Funciton
