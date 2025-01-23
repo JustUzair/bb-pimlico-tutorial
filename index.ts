@@ -108,16 +108,6 @@ async function actionSendTransaction() {
 }
 
 async function actionSendUserOp() {
-  // const account = await toCoinbaseSmartAccount({
-  //   client: publicClient,
-  //   owners: [signer],
-  // });
-  // const smartAccountClient = createBundlerClient({
-  //   account,
-  //   client: publicClient,
-  //   transport: http(buildbearSandboxUrl), //sending the tx to buildbear
-  // });
-
   await printBalanceBefore();
   const txHash = await smartAccountClient.sendUserOperation({
     account,
@@ -139,7 +129,23 @@ async function actionSendUserOp() {
   await printBalanceAfter();
 }
 
-async function actionEstimateUserOpGas() {}
+async function actionEstimateUserOpGas() {
+  const gasEstimationObject = await smartAccountClient.estimateUserOperationGas(
+    {
+      account,
+      calls: [
+        {
+          to: "0xd8da6bf26964af9d7eed9e03e53415d37aa96045",
+          value: parseEther("1"),
+        },
+      ],
+    }
+  );
+
+  const gasEstimation = gasEstimationObject.paymasterPostOpGasLimit;
+  console.log(`🟢User Operation's Gas Estimate`);
+  console.log(gasEstimationObject);
+}
 // async function functionName() {}
 // async function functionName() {}
 // async function functionName() {}

@@ -11,3 +11,5 @@ npm start
 
 - Use the flags:
   - `-- --send-transaction`
+  - `-- --send-userOp`
+  - `-- --estimate-userOp-gas`
