@@ -146,6 +146,29 @@ async function actionEstimateUserOpGas() {
   console.log(`🟢User Operation's Gas Estimate`);
   console.log(gasEstimationObject);
 }
+
+async function actionGetUserOpReceipt() {
+  await printBalanceBefore();
+  const txHash = await smartAccountClient.sendUserOperation({
+    account,
+    calls: [
+      {
+        to: "0xd8da6bf26964af9d7eed9e03e53415d37aa96045",
+        value: parseEther("1"),
+      },
+    ],
+  });
+
+  await smartAccountClient.waitForUserOperationReceipt({
+    hash: txHash,
+  });
+
+  let userOperationReceipt = await smartAccountClient.getUserOperationReceipt({
+    hash: txHash,
+  });
+  console.log(`🟢User operation Receipt\n`, userOperationReceipt);
+  await printBalanceAfter();
+}
 // async function functionName() {}
 // async function functionName() {}
 // async function functionName() {}
@@ -164,12 +187,15 @@ if (process.argv[2] == "--send-transaction") {
 } else if (process.argv[2] == "--estimate-userOp-gas") {
   await actionEstimateUserOpGas();
   exit();
+} else if (process.argv[2] == "--get-userOp-receipt") {
+  await actionGetUserOpReceipt();
+  exit();
 }
 
 /* TODO
-eth_sendUserOperation 🔸
 
-eth_estimateUserOperationGas 
+
+
 
 eth_getUserOperationReceipt
 
