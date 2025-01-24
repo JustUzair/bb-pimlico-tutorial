@@ -224,7 +224,17 @@ async function actionGetUserOpStatus() {
 // console.log("====================================");
 // console.log(process.argv);
 // console.log("====================================");
-if (process.argv[2] == "--send-transaction") {
+if (process.argv[2] == "--all") {
+  await actionSendTransaction();
+  await actionSendUserOp();
+  await actionEstimateUserOpGas();
+  await actionGetUserOpReceipt();
+  await actionGetUserOpByHash();
+  await actionGetSupportedEntryPoints();
+  await actionGetUserOpGasPrice();
+  await actionGetUserOpStatus();
+  exit();
+} else if (process.argv[2] == "--send-transaction") {
   await actionSendTransaction();
   exit();
 } else if (process.argv[2] == "--send-userOp") {
