@@ -13,11 +13,10 @@ import { createSmartAccountClient } from "permissionless";
 import { ethers, parseEther } from "ethers";
 import { exit } from "process";
 
-const buildbearSandboxUrl =
-  "https://rpc.buildbear.io/parliamentary-katebishop-6df91ec9";
+const buildbearSandboxUrl = "https://rpc.dev.buildbear.io/uzair";
 
 const BBSandboxNetwork = /*#__PURE__*/ defineChain({
-  id: 23177, // IMPORTANT : replace this with your sandbox's chain id
+  id: 11385, // IMPORTANT : replace this with your sandbox's chain id
   name: "BuildBear x Polygon Mainnet Sandbox", // name your network
   nativeCurrency: { name: "MATIC", symbol: "MATIC", decimals: 18 }, // native currency of forked network
   rpcUrls: {
@@ -28,8 +27,8 @@ const BBSandboxNetwork = /*#__PURE__*/ defineChain({
   blockExplorers: {
     default: {
       name: "BuildBear x Polygon Mainnet Scan", // block explorer for network
-      url: "https://explorer.buildbear.io/parliamentary-katebishop-6df91ec9",
-      apiUrl: "https://api.buildbear.io/parliamentary-katebishop-6df91ec9/api",
+      url: "https://explorer.dev.buildbear.io/uzair",
+      apiUrl: "https://api.dev.buildbear.io/uzair/api",
     },
   },
 });
@@ -102,7 +101,7 @@ async function actionSendTransaction() {
   });
 
   console.log(
-    `🟢User operation included: https://explorer.buildbear.io/parliamentary-katebishop-6df91ec9/tx/${txHash}`
+    `🟢User operation included: https://explorer.buildbear.io/uzair/tx/${txHash}`
   );
   await printBalanceAfter();
 }
@@ -124,7 +123,7 @@ async function actionSendUserOp() {
   });
 
   console.log(
-    `🟢User operation included: https://explorer.buildbear.io/parliamentary-katebishop-6df91ec9/tx/${result.receipt.transactionHash}`
+    `🟢User operation included: https://explorer.buildbear.io/uzair/tx/${result.receipt.transactionHash}`
   );
   await printBalanceAfter();
 }
