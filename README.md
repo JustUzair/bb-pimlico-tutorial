@@ -12,6 +12,7 @@ npm start
 Run the script with `npm start` and use the flags below to carry out a smart account action
 
 - Use the flags:
+  - `-- --all`: Test all the endpoints & actions below
   - `-- --send-transaction`
   - `-- --send-userOp`
   - `-- --estimate-userOp-gas`
