@@ -4,17 +4,13 @@ import { toSafeSmartAccount } from "permissionless/accounts";
 import { Hex, createPublicClient, defineChain, formatEther, http } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { createPimlicoClient } from "permissionless/clients/pimlico";
-import {
-  createBundlerClient,
-  entryPoint07Address,
-  toCoinbaseSmartAccount,
-} from "viem/account-abstraction";
+import { entryPoint07Address } from "viem/account-abstraction";
 import { createSmartAccountClient } from "permissionless";
-import { ethers, parseEther } from "ethers";
+import { parseEther } from "ethers";
 import { exit } from "process";
 
 const buildbearSandboxUrl =
-  "https://rpc.buildbear.io/parliamentary-katebishop-6df91ec9";
+  "https://rpc.buildbear.io/parliamentary-katebishop-6df91ec9"; // https://rpc.buildbear.io/<SANDBOX-ID>
 
 const BBSandboxNetwork = /*#__PURE__*/ defineChain({
   id: 23177, // IMPORTANT : replace this with your sandbox's chain id
@@ -28,8 +24,8 @@ const BBSandboxNetwork = /*#__PURE__*/ defineChain({
   blockExplorers: {
     default: {
       name: "BuildBear x Polygon Mainnet Scan", // block explorer for network
-      url: "https://explorer.buildbear.io/parliamentary-katebishop-6df91ec9",
-      apiUrl: "https://api.buildbear.io/parliamentary-katebishop-6df91ec9/api",
+      url: "https://explorer.buildbear.io/parliamentary-katebishop-6df91ec9", // https://explorer.buildbear.io/<SANDBOX-ID>
+      apiUrl: "https://api.buildbear.io/parliamentary-katebishop-6df91ec9/api", // https://api.buildbear.io/<SANDBOX-ID>/api
     },
   },
 });
@@ -44,11 +40,11 @@ const privateKey = (process.env.PRIVATE_KEY as Hex)
 
 export const publicClient = createPublicClient({
   chain: BBSandboxNetwork,
-  transport: http(buildbearSandboxUrl), //@>>> Put in buildbear rpc
+  transport: http(buildbearSandboxUrl),
 });
 
 const pimlicoClient = createPimlicoClient({
-  transport: http(buildbearSandboxUrl),
+  transport: http(buildbearSandboxUrl), // all pimlico requests are handled by buildbear sandbox rpc: https://rpc.buildbear.io/<SANDBOX-ID>
   entryPoint: {
     address: entryPoint07Address,
     version: "0.7",
@@ -90,6 +86,42 @@ if (+balance.toString() <= 0) {
   console.log("====================================");
   console.log(`Smart Account Address: ${account.address}`);
   console.log("====================================");
+}
+
+if (process.argv[2] == "--all") {
+  await actionSendTransaction();
+  await actionSendUserOp();
+  await actionEstimateUserOpGas();
+  await actionGetUserOpReceipt();
+  await actionGetUserOpByHash();
+  await actionGetSupportedEntryPoints();
+  await actionGetUserOpGasPrice();
+  await actionGetUserOpStatus();
+  exit();
+} else if (process.argv[2] == "--send-transaction") {
+  await actionSendTransaction();
+  exit();
+} else if (process.argv[2] == "--send-userOp") {
+  await actionSendUserOp();
+  exit();
+} else if (process.argv[2] == "--estimate-userOp-gas") {
+  await actionEstimateUserOpGas();
+  exit();
+} else if (process.argv[2] == "--get-userOp-receipt") {
+  await actionGetUserOpReceipt();
+  exit();
+} else if (process.argv[2] == "--get-userOp-by-hash") {
+  await actionGetUserOpByHash();
+  exit();
+} else if (process.argv[2] == "--get-supported-entrypoints") {
+  await actionGetSupportedEntryPoints();
+  exit();
+} else if (process.argv[2] == "--get-userOp-gasPrice") {
+  await actionGetUserOpGasPrice();
+  exit();
+} else if (process.argv[2] == "--get-userOp-status") {
+  await actionGetUserOpStatus();
+  exit();
 }
 
 async function actionSendTransaction() {
@@ -218,52 +250,6 @@ async function actionGetUserOpStatus() {
   });
   console.log(`🟢User operation status\n`, userOpStatus);
 }
-
-// async function functionName() {}
-
-// console.log("====================================");
-// console.log(process.argv);
-// console.log("====================================");
-if (process.argv[2] == "--all") {
-  await actionSendTransaction();
-  await actionSendUserOp();
-  await actionEstimateUserOpGas();
-  await actionGetUserOpReceipt();
-  await actionGetUserOpByHash();
-  await actionGetSupportedEntryPoints();
-  await actionGetUserOpGasPrice();
-  await actionGetUserOpStatus();
-  exit();
-} else if (process.argv[2] == "--send-transaction") {
-  await actionSendTransaction();
-  exit();
-} else if (process.argv[2] == "--send-userOp") {
-  await actionSendUserOp();
-  exit();
-} else if (process.argv[2] == "--estimate-userOp-gas") {
-  await actionEstimateUserOpGas();
-  exit();
-} else if (process.argv[2] == "--get-userOp-receipt") {
-  await actionGetUserOpReceipt();
-  exit();
-} else if (process.argv[2] == "--get-userOp-by-hash") {
-  await actionGetUserOpByHash();
-  exit();
-} else if (process.argv[2] == "--get-supported-entrypoints") {
-  await actionGetSupportedEntryPoints();
-  exit();
-} else if (process.argv[2] == "--get-userOp-gasPrice") {
-  await actionGetUserOpGasPrice();
-  exit();
-} else if (process.argv[2] == "--get-userOp-status") {
-  await actionGetUserOpStatus();
-  exit();
-}
-
-/* TODO
-pimlico_sendCompressedUserOperation
-
-*/
 
 // Helper Funciton
 
