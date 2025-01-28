@@ -4,13 +4,9 @@ import { toSafeSmartAccount } from "permissionless/accounts";
 import { Hex, createPublicClient, defineChain, formatEther, http } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { createPimlicoClient } from "permissionless/clients/pimlico";
-import {
-  createBundlerClient,
-  entryPoint07Address,
-  toCoinbaseSmartAccount,
-} from "viem/account-abstraction";
+import { entryPoint07Address } from "viem/account-abstraction";
 import { createSmartAccountClient } from "permissionless";
-import { ethers, parseEther } from "ethers";
+import { parseEther } from "ethers";
 import { exit } from "process";
 
 const buildbearSandboxUrl = "https://rpc.dev.buildbear.io/uzair";
@@ -27,8 +23,8 @@ const BBSandboxNetwork = /*#__PURE__*/ defineChain({
   blockExplorers: {
     default: {
       name: "BuildBear x Polygon Mainnet Scan", // block explorer for network
-      url: "https://explorer.dev.buildbear.io/uzair",
-      apiUrl: "https://api.dev.buildbear.io/uzair/api",
+      url: "https://explorer.dev.buildbear.io/uzair", // https://explorer.dev.buildbear.io/<SANDBOX-ID>
+      apiUrl: "https://api.dev.buildbear.io/uzair/api", //https://api.dev.buildbear.io/<SANDBOX-ID>/api
     },
   },
 });
