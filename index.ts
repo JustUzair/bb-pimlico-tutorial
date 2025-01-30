@@ -127,6 +127,9 @@ let swapParams = {
   amountOutMinimum: 0 as unknown as bigint, //amountOutMinimum
   sqrtPriceLimitX96: 0 as unknown as bigint, //sqrtPriceLimitX96
 };
+
+console.log("🟠 Approving DAI....");
+console.log("====================================");
 const txHash = await smartAccountClient.sendUserOperation({
   account,
   calls: [
@@ -157,27 +160,29 @@ const txHash = await smartAccountClient.sendUserOperation({
     },
   ],
 });
+console.log("🟠 Swapping DAI....");
 
-await smartAccountClient.waitForUserOperationReceipt({
+let { receipt } = await smartAccountClient.waitForUserOperationReceipt({
   hash: txHash,
 });
 
 console.log(
-  `🟢User operation included: https://explorer.buildbear.io/uzair/tx/${txHash}`
+  `🟢User operation included: https://explorer.buildbear.io/uzair/tx/${receipt.transactionHash}`
 );
 
 balance = await publicClient.getBalance({ address: account.address }); // Get the balance of the sender
 let daiBalanceAfter = await getDAIBalance();
 let usdcBalanceAfter = await getUSDCBalance();
 
-console.log("🟢 Balance after transaction: ", formatEther(balance));
-console.log("🟢 DAI Balance after transaction: ", daiBalanceAfter);
-console.log("🟢 USDC Balance after transaction: ", usdcBalanceAfter);
 console.log(
-  `Swapped ${formatUnits(swapParams.amountIn, 18)} DAI to ${
+  `🟢 Woot 🎉🎉 Swapped ${formatUnits(swapParams.amountIn, 18)} DAI to ${
     +usdcBalanceAfter - +usdcBalanceBefore
   } USDC`
 );
+
+console.log("🟢 Balance after transaction: ", formatEther(balance));
+console.log("🟢 DAI Balance after transaction: ", daiBalanceAfter);
+console.log("🟢 USDC Balance after transaction: ", usdcBalanceAfter);
 
 exit();
 // Helper

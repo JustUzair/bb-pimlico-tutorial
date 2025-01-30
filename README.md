@@ -7,7 +7,7 @@ npm install
 npm start
 ```
 
-# Output for Swapping DAI to USDC on Uniswap V3 with Alto Bundler & Pimlico
+# Output for Swapping DAI to USDC on Uniswap V3 with Alto Bundler & BuildBear Sandbox
 
 ```bash
 $ npm start
