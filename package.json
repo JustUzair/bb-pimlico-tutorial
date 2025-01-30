@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "tsx index.ts",
-    "start2": "tsx index2.ts"
+    "get-calldata": "tsx uniswap-calldata.ts"
   },
   "author": "",
   "license": "MIT",
