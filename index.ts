@@ -126,6 +126,7 @@ let swapParams = {
   amountIn: parseEther("1") as bigint, //amountIn
   amountOutMinimum: 0 as unknown as bigint, //amountOutMinimum
   sqrtPriceLimitX96: 0 as unknown as bigint, //sqrtPriceLimitX96
+  v3Router: "0xE592427A0AEce92De3Edee1F18E0157C05861564" as `0x${string}`,
 };
 
 console.log("🟠 Approving DAI....");
@@ -137,10 +138,10 @@ const txHash = await smartAccountClient.sendUserOperation({
       to: "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063" as `0x${string}`, //DAI
       abi: parseAbi(["function approve(address,uint)"]),
       functionName: "approve",
-      args: ["0xE592427A0AEce92De3Edee1F18E0157C05861564", parseEther("1")],
+      args: [swapParams.v3Router, parseEther("1")],
     },
     {
-      to: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+      to: swapParams.v3Router, //UniV3 Router
       abi: parseAbi([
         "function exactInputSingle((address, address , uint24 , address , uint256 , uint256 , uint256 , uint160)) external payable returns (uint256 amountOut)",
       ]),
@@ -175,7 +176,7 @@ let daiBalanceAfter = await getDAIBalance();
 let usdcBalanceAfter = await getUSDCBalance();
 
 console.log(
-  `🟢 Woot 🎉🎉 Swapped ${formatUnits(swapParams.amountIn, 18)} DAI to ${
+  `🟢 Yay!! 🎉🎉 Swapped ${formatUnits(swapParams.amountIn, 18)} DAI to ${
     +usdcBalanceAfter - +usdcBalanceBefore
   } USDC`
 );
@@ -185,7 +186,10 @@ console.log("🟢 DAI Balance after transaction: ", daiBalanceAfter);
 console.log("🟢 USDC Balance after transaction: ", usdcBalanceAfter);
 
 exit();
-// Helper
+
+// Helper Functions
+
+// get USDC Balance of Smart Account
 async function getUSDCBalance(): Promise<string> {
   let res = await publicClient.readContract({
     address: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
@@ -196,6 +200,7 @@ async function getUSDCBalance(): Promise<string> {
   return formatUnits(res as bigint, 6).toString();
 }
 
+// get DAI Balance of Smart Account
 async function getDAIBalance(): Promise<string> {
   let res = await publicClient.readContract({
     address: "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063",
