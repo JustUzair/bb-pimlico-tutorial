@@ -101,6 +101,7 @@ if (+balance.toString() <= 0 || +daiBalanceBefore.toString() <= 0) {
   console.log(`Smart Account Address: ${account.address}`);
   console.log("====================================");
 }
+
 console.log("====================================");
 
 console.log(
@@ -110,12 +111,6 @@ console.log("🟠Balance before transaction: ", formatEther(balance));
 console.log("🟠DAI Balance before transaction: ", daiBalanceBefore);
 console.log("🟠USDC Balance before transaction: ", usdcBalanceBefore);
 console.log("====================================");
-
-// const txHash = await smartAccountClient.sendTransaction({
-//   to: "0xd8da6bf26964af9d7eed9e03e53415d37aa96045",
-//   value: ethers.parseEther("1"),
-//   data: "0x",
-// });
 
 let swapParams = {
   tokenIn: "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063" as `0x${string}`, // DAI
@@ -131,6 +126,7 @@ let swapParams = {
 
 console.log("🟠 Approving DAI....");
 console.log("====================================");
+
 const txHash = await smartAccountClient.sendUserOperation({
   account,
   calls: [
@@ -165,6 +161,8 @@ console.log("🟠 Swapping DAI....");
 
 let { receipt } = await smartAccountClient.waitForUserOperationReceipt({
   hash: txHash,
+  retryCount: 7,
+  pollingInterval: 2000,
 });
 
 console.log(
