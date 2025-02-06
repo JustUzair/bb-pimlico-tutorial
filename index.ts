@@ -3,8 +3,6 @@ import { appendFileSync } from "fs";
 import { toSafeSmartAccount } from "permissionless/accounts";
 import {
   Hex,
-  bytesToBigInt,
-  bytesToString,
   createPublicClient,
   defineChain,
   encodeAbiParameters,
@@ -13,39 +11,37 @@ import {
   formatUnits,
   http,
   parseAbi,
-  parseAbiParameter,
   parseAbiParameters,
-  toBytes,
-  zeroAddress,
 } from "viem";
-import viem from "viem";
-
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { createPimlicoClient } from "permissionless/clients/pimlico";
 import { entryPoint07Address } from "viem/account-abstraction";
 import { createSmartAccountClient } from "permissionless";
 import { parseEther } from "ethers";
 import { exit } from "process";
-import UniV4Abi from "./utils/ABIs/UniswapV4.json";
+
 import ERC20Abi from "./utils/ABIs/ERC20.json";
-import { readContract } from "viem/actions";
 
 const DAI_MAINNET =
   `0x6B175474E89094C44Da98b954EedeAC495271d0F` as `0x${string}`;
 const USDC_MAINNET =
   "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48" as `0x${string}`;
 const UNI_V4_ROUTER =
-  "0xE592427A0AEce92De3Edee1F18E0157C05861564" as `0x${string}`;
+  "0x66a9893cC07D91D95644AEDD05D03f95e1dBA8Af" as `0x${string}`;
+
+const PERMIT2_Mainnet =
+  `0x000000000022D473030F116dDEE9F6B43aC78BA3` as `0x${string}`;
 let swapParams = {
   // tokenIn: DAI_MAINNET, // DAI
   // tokenOut: USDC_MAINNET, // USDC
   // fee: 3000 as number, //fee
   // recipient: account.address, // recipient
-  // deadline: (Math.floor(Date.now() / 1000) + 60 * 4) as unknown as bigint, // expiration
+  deadline: (Math.floor(Date.now() / 1000) + 60 * 4) as unknown, // expiration
   amountIn: parseEther("1") as bigint, //amountIn
   minAmountOut: parseEther("0") as unknown as bigint, //amountOutMinimum
   // sqrtPriceLimitX96: 0 as unknown as bigint, //sqrtPriceLimitX96
   v4UniversalRouter: UNI_V4_ROUTER,
+  permit2Address: PERMIT2_Mainnet,
 };
 
 // #### Swap Command ####
@@ -53,6 +49,9 @@ let swapParams = {
 const command_swapExactIn = 0x00;
 const commands_packed = encodePacked(["uint8"], [command_swapExactIn]);
 
+console.log("=============Commands==============");
+console.log(commands_packed);
+console.log("====================================");
 // #### Actions ####
 // Refer to official docs: https://docs.uniswap.org/contracts/v4/reference/periphery/libraries/Actions
 const actions_swapExactInSingle = 0x04;
@@ -99,18 +98,32 @@ params[2] = encodeAbiParameters(
 );
 
 console.log("=============Params===============");
-console.log(params);
+// console.log(...params);
+params.map((param, index) => {
+  console.log(`Param ${index + 1} :::: ${param}\n`);
+});
 console.log("====================================");
 
 // Function Inputs
 
 const inputs: `0x${string}`[] = [];
-inputs[0] = encodeAbiParameters(
-  parseAbiParameters(["bytes actions", "bytes[] params"]),
-  [actions_packed, params]
+// inputs[0] = encodeAbiParameters(
+//   parseAbiParameters(["bytes actions", "bytes[] params"]),
+//   [actions_packed, params]
+// );
+
+const actions = encodePacked(
+  ["uint8", "uint8", "uint8"],
+  [actions_swapExactInSingle, actions_settleAll, actions_takeAll]
 );
+
+inputs[0] = encodeAbiParameters(parseAbiParameters(["(bytes,bytes[])"]), [
+  [actions, params],
+]);
 console.log("=============Inputs===============");
-console.log(inputs);
+inputs.map((input, index) => {
+  console.log(`Input ${index + 1} :::: ${input}\n`);
+});
 console.log("====================================");
 // const expiry = Math.floor(Date.now() / 1000) + 60 * 4;
 
@@ -212,39 +225,36 @@ const txHash = await smartAccountClient.sendUserOperation({
   account,
   calls: [
     // First approve DAI
-    {
-      to: DAI_MAINNET,
-      abi: parseAbi([
-        "function approve(address spender, uint256 amount) external returns (bool)",
-      ]),
-      functionName: "approve",
-      args: [swapParams.v4UniversalRouter, swapParams.amountIn],
-    },
+    // {
+    //   to: DAI_MAINNET,
+    //   abi: parseAbi([
+    //     "function approve(address spender, uint256 amount) external returns (bool)",
+    //   ]),
+    //   functionName: "approve",
+    //   args: [swapParams.permit2Address, swapParams.amountIn],
+    // },
     // Then approve with Permit2
     {
-      to: swapParams.v4UniversalRouter,
+      to: swapParams.permit2Address,
       abi: parseAbi([
-        "function approveTokenWithPermit2(address token, uint160 amount, uint48 expiration) external",
+        "function approve(address token, address spender, uint160 amount, uint48 expiration)",
       ]),
-      functionName: "approveTokenWithPermit2",
+      functionName: "approve",
       args: [
         DAI_MAINNET,
+        swapParams.v4UniversalRouter,
         swapParams.amountIn,
-        Math.floor(Date.now() / 1000) + 60 * 3,
+        swapParams.deadline as number,
       ],
     },
-    // Execute the swap
+    // // Execute the swap
     {
       to: swapParams.v4UniversalRouter,
       abi: parseAbi([
         "function execute(bytes commands, bytes[] inputs, uint256 deadline) external payable",
       ]),
       functionName: "execute",
-      args: [
-        commands_packed,
-        inputs,
-        (Math.floor(Date.now() / 1000) + 60 * 4) as unknown as bigint,
-      ],
+      args: [commands_packed, inputs, swapParams.deadline as bigint],
     },
   ],
 });
