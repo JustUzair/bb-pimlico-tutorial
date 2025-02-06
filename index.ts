@@ -47,24 +47,17 @@ let swapParams = {
 
 // #### Swap Command ####
 // Refer to universal router's docs : https://docs.uniswap.org/contracts/universal-router/technical-reference#command
-const command_swapExactIn = "0x0a0004" as `0x${string}`;
-// const commands_packed = encodePacked(
-//   ["bytes"],
-//   [command_swapExactIn as command_swapExactIn]
-// );
+const command_swapExactIn = "0x10" as `0x${string}`;
+const commands_packed = encodePacked(["bytes"], [command_swapExactIn]);
 
 console.log("=============Commands==============");
-console.log(command_swapExactIn);
+console.log(commands_packed);
 console.log("====================================");
 // #### Actions ####
 // Refer to official docs: https://docs.uniswap.org/contracts/v4/reference/periphery/libraries/Actions
 const actions_swapExactInSingle = 0x04;
 const actions_settleAll = 0x10;
 const actions_takeAll = 0x13;
-const actions_packed = encodePacked(
-  ["uint8", "uint8", "uint8"],
-  [actions_swapExactInSingle, actions_settleAll, actions_takeAll]
-);
 
 const params: `0x${string}`[] = [];
 
@@ -72,7 +65,7 @@ const params: `0x${string}`[] = [];
 params[0] = encodeAbiParameters(
   parseAbiParameters([
     // Using exact struct format from docs
-    "((address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) poolKey, bool zeroForOne, uint128 amountIn, uint128 amountOutMinimum, bytes hookData)",
+    "((address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) poolKey, bool zeroForOne, uint128 amountIn, uint128 amountOutMinimum,uint160 sqrtPriceLimitX96, bytes hookData)",
   ]),
   [
     {
@@ -86,7 +79,8 @@ params[0] = encodeAbiParameters(
       zeroForOne: true,
       amountIn: swapParams.amountIn,
       amountOutMinimum: swapParams.minAmountOut,
-      hookData: "0x0" as `0x${string}`,
+      sqrtPriceLimitX96: 0 as unknown as bigint,
+      hookData: "" as `0x${string}`,
     },
   ]
 );
@@ -118,9 +112,14 @@ const actions = encodePacked(
 );
 
 const inputs: `0x${string}`[] = [];
-inputs[0] = encodeAbiParameters(parseAbiParameters(["(bytes,bytes[])"]), [
-  [actions, params],
+// inputs[0] = encodeAbiParameters(parseAbiParameters(["(bytes,bytes[])"]), [
+//   [actions, params],
+// ]);
+inputs[0] = encodeAbiParameters(parseAbiParameters(["bytes", "bytes[]"]), [
+  actions,
+  params,
 ]);
+
 console.log("=============Inputs===============");
 inputs.map((input, index) => {
   console.log(`Input ${index + 1} :::: ${input}\n`);
@@ -130,6 +129,14 @@ console.log("====================================");
 console.log("===========DEADLINE==============");
 console.log(swapParams.deadline);
 console.log("====================================");
+
+console.log("\n\n\n============= DEBUGGING INDIVIDUAL PARAMS ==============");
+console.log("Actions (Encoded): ", actions);
+console.log("Param 0 (Encoded):", params[0]);
+console.log("Param 1 (Encoded):", params[1]);
+console.log("Param 2 (Encoded):", params[2]);
+console.log("=======================================================\n\n\n");
+
 const buildbearSandboxUrl =
   "https://rpc.buildbear.io/historic-vulture-330d1a82";
 
@@ -237,19 +244,19 @@ const txHash = await smartAccountClient.sendUserOperation({
     //   args: [swapParams.permit2Address, swapParams.amountIn],
     // },
     // Then approve with Permit2
-    {
-      to: swapParams.permit2Address,
-      abi: parseAbi([
-        "function approve(address token, address spender, uint160 amount, uint48 expiration)",
-      ]),
-      functionName: "approve",
-      args: [
-        DAI_MAINNET,
-        swapParams.v4UniversalRouter,
-        swapParams.amountIn,
-        swapParams.deadline as number,
-      ],
-    },
+    // {
+    //   to: swapParams.permit2Address,
+    //   abi: parseAbi([
+    //     "function approve(address token, address spender, uint160 amount, uint48 expiration)",
+    //   ]),
+    //   functionName: "approve",
+    //   args: [
+    //     DAI_MAINNET,
+    //     swapParams.v4UniversalRouter,
+    //     swapParams.amountIn,
+    //     swapParams.deadline as number,
+    //   ],
+    // },
     // // Execute the swap
     {
       to: swapParams.v4UniversalRouter,
@@ -257,7 +264,7 @@ const txHash = await smartAccountClient.sendUserOperation({
         "function execute(bytes commands, bytes[] inputs, uint256 deadline) external payable",
       ]),
       functionName: "execute",
-      args: [command_swapExactIn, inputs, swapParams.deadline as bigint],
+      args: [commands_packed, inputs, swapParams.deadline as bigint],
     },
   ],
 });
