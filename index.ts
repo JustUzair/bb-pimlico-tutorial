@@ -12,6 +12,7 @@ import {
   http,
   parseAbi,
   parseAbiParameters,
+  zeroAddress,
 } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { createPimlicoClient } from "permissionless/clients/pimlico";
@@ -46,11 +47,14 @@ let swapParams = {
 
 // #### Swap Command ####
 // Refer to universal router's docs : https://docs.uniswap.org/contracts/universal-router/technical-reference#command
-const command_swapExactIn = 0x00;
-const commands_packed = encodePacked(["uint8"], [command_swapExactIn]);
+const command_swapExactIn = "0x0a0004" as `0x${string}`;
+// const commands_packed = encodePacked(
+//   ["bytes"],
+//   [command_swapExactIn as command_swapExactIn]
+// );
 
 console.log("=============Commands==============");
-console.log(commands_packed);
+console.log(command_swapExactIn);
 console.log("====================================");
 // #### Actions ####
 // Refer to official docs: https://docs.uniswap.org/contracts/v4/reference/periphery/libraries/Actions
@@ -64,37 +68,39 @@ const actions_packed = encodePacked(
 
 const params: `0x${string}`[] = [];
 
+// First parameter: ExactInputSingleParams
 params[0] = encodeAbiParameters(
   parseAbiParameters([
-    "(address currency0,address currency1,uint24 fee,int24 tickSpacing,address hooks) poolKey",
-    "bool zeroForOne",
-    "uint128 amountIn",
-    "uint128 amountOutMinimum",
-    "uint160 sqrtPriceLimitX96",
-    "bytes hookData",
+    // Using exact struct format from docs
+    "((address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) poolKey, bool zeroForOne, uint128 amountIn, uint128 amountOutMinimum, bytes hookData)",
   ]),
   [
     {
-      currency0: DAI_MAINNET,
-      currency1: USDC_MAINNET,
-      fee: 100,
-      tickSpacing: 1,
-      hooks: `0x0000000000000000000000000000000000000000` as `0x${string}`,
+      poolKey: {
+        currency0: DAI_MAINNET,
+        currency1: USDC_MAINNET,
+        fee: 100,
+        tickSpacing: 1,
+        hooks: zeroAddress,
+      },
+      zeroForOne: true,
+      amountIn: swapParams.amountIn,
+      amountOutMinimum: swapParams.minAmountOut,
+      hookData: "0x0" as `0x${string}`,
     },
-    true,
-    swapParams.amountIn,
-    swapParams.minAmountOut,
-    0 as unknown as bigint,
-    `` as `0x${string}`,
   ]
 );
+
+// Second parameter: input token configuration
 params[1] = encodeAbiParameters(
-  parseAbiParameters(["address currency0", "uint128 amountIn"]),
-  [DAI_MAINNET, swapParams.amountIn]
+  parseAbiParameters(["(address, uint128)"]), // Note the tuple format
+  [[DAI_MAINNET, swapParams.amountIn]]
 );
+
+// Third parameter: output token configuration
 params[2] = encodeAbiParameters(
-  parseAbiParameters(["address currency1", "uint128 minAmountOut"]),
-  [USDC_MAINNET, swapParams.minAmountOut]
+  parseAbiParameters(["(address, uint128)"]), // Note the tuple format
+  [[USDC_MAINNET, swapParams.minAmountOut]]
 );
 
 console.log("=============Params===============");
@@ -106,17 +112,12 @@ console.log("====================================");
 
 // Function Inputs
 
-const inputs: `0x${string}`[] = [];
-// inputs[0] = encodeAbiParameters(
-//   parseAbiParameters(["bytes actions", "bytes[] params"]),
-//   [actions_packed, params]
-// );
-
 const actions = encodePacked(
   ["uint8", "uint8", "uint8"],
   [actions_swapExactInSingle, actions_settleAll, actions_takeAll]
 );
 
+const inputs: `0x${string}`[] = [];
 inputs[0] = encodeAbiParameters(parseAbiParameters(["(bytes,bytes[])"]), [
   [actions, params],
 ]);
@@ -126,7 +127,9 @@ inputs.map((input, index) => {
 });
 console.log("====================================");
 // const expiry = Math.floor(Date.now() / 1000) + 60 * 4;
-
+console.log("===========DEADLINE==============");
+console.log(swapParams.deadline);
+console.log("====================================");
 const buildbearSandboxUrl =
   "https://rpc.buildbear.io/historic-vulture-330d1a82";
 
@@ -254,7 +257,7 @@ const txHash = await smartAccountClient.sendUserOperation({
         "function execute(bytes commands, bytes[] inputs, uint256 deadline) external payable",
       ]),
       functionName: "execute",
-      args: [commands_packed, inputs, swapParams.deadline as bigint],
+      args: [command_swapExactIn, inputs, swapParams.deadline as bigint],
     },
   ],
 });
