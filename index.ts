@@ -3,31 +3,124 @@ import { appendFileSync } from "fs";
 import { toSafeSmartAccount } from "permissionless/accounts";
 import {
   Hex,
+  bytesToBigInt,
+  bytesToString,
   createPublicClient,
   defineChain,
+  encodeAbiParameters,
+  encodePacked,
   formatEther,
   formatUnits,
   http,
   parseAbi,
-  parseUnits,
+  parseAbiParameter,
+  parseAbiParameters,
+  toBytes,
+  zeroAddress,
 } from "viem";
+import viem from "viem";
+
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { createPimlicoClient } from "permissionless/clients/pimlico";
 import { entryPoint07Address } from "viem/account-abstraction";
 import { createSmartAccountClient } from "permissionless";
-import { ethers, Interface, Wallet, JsonRpcProvider, parseEther } from "ethers";
-
+import { parseEther } from "ethers";
 import { exit } from "process";
-import UniV3Abi from "./utils/ABIs/UniswapV3.json";
+import UniV4Abi from "./utils/ABIs/UniswapV4.json";
 import ERC20Abi from "./utils/ABIs/ERC20.json";
 import { readContract } from "viem/actions";
 
-const buildbearSandboxUrl = "https://rpc.buildbear.io/uzair";
+const DAI_MAINNET =
+  `0x6B175474E89094C44Da98b954EedeAC495271d0F` as `0x${string}`;
+const USDC_MAINNET =
+  "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48" as `0x${string}`;
+const UNI_V4_ROUTER =
+  "0xE592427A0AEce92De3Edee1F18E0157C05861564" as `0x${string}`;
+let swapParams = {
+  // tokenIn: DAI_MAINNET, // DAI
+  // tokenOut: USDC_MAINNET, // USDC
+  // fee: 3000 as number, //fee
+  // recipient: account.address, // recipient
+  // deadline: (Math.floor(Date.now() / 1000) + 60 * 4) as unknown as bigint, // expiration
+  amountIn: parseEther("1") as bigint, //amountIn
+  minAmountOut: parseEther("0") as unknown as bigint, //amountOutMinimum
+  // sqrtPriceLimitX96: 0 as unknown as bigint, //sqrtPriceLimitX96
+  v4UniversalRouter: UNI_V4_ROUTER,
+};
+
+// #### Swap Command ####
+// Refer to universal router's docs : https://docs.uniswap.org/contracts/universal-router/technical-reference#command
+const command_swapExactIn = 0x00;
+const commands_packed = encodePacked(["uint8"], [command_swapExactIn]);
+
+// #### Actions ####
+// Refer to official docs: https://docs.uniswap.org/contracts/v4/reference/periphery/libraries/Actions
+const actions_swapExactInSingle = 0x04;
+const actions_settleAll = 0x10;
+const actions_takeAll = 0x13;
+const actions_packed = encodePacked(
+  ["uint8", "uint8", "uint8"],
+  [actions_swapExactInSingle, actions_settleAll, actions_takeAll]
+);
+
+const params: `0x${string}`[] = [];
+
+params[0] = encodeAbiParameters(
+  parseAbiParameters([
+    "(address currency0,address currency1,uint24 fee,int24 tickSpacing,address hooks) poolKey",
+    "bool zeroForOne",
+    "uint128 amountIn",
+    "uint128 amountOutMinimum",
+    "uint160 sqrtPriceLimitX96",
+    "bytes hookData",
+  ]),
+  [
+    {
+      currency0: DAI_MAINNET,
+      currency1: USDC_MAINNET,
+      fee: 100,
+      tickSpacing: 1,
+      hooks: `0x0000000000000000000000000000000000000000` as `0x${string}`,
+    },
+    true,
+    swapParams.amountIn,
+    swapParams.minAmountOut,
+    0 as unknown as bigint,
+    `` as `0x${string}`,
+  ]
+);
+params[1] = encodeAbiParameters(
+  parseAbiParameters(["address currency0", "uint128 amountIn"]),
+  [DAI_MAINNET, swapParams.amountIn]
+);
+params[2] = encodeAbiParameters(
+  parseAbiParameters(["address currency1", "uint128 minAmountOut"]),
+  [USDC_MAINNET, swapParams.minAmountOut]
+);
+
+console.log("=============Params===============");
+console.log(params);
+console.log("====================================");
+
+// Function Inputs
+
+const inputs: `0x${string}`[] = [];
+inputs[0] = encodeAbiParameters(
+  parseAbiParameters(["bytes actions", "bytes[] params"]),
+  [actions_packed, params]
+);
+console.log("=============Inputs===============");
+console.log(inputs);
+console.log("====================================");
+// const expiry = Math.floor(Date.now() / 1000) + 60 * 4;
+
+const buildbearSandboxUrl =
+  "https://rpc.buildbear.io/historic-vulture-330d1a82";
 
 const BBSandboxNetwork = /*#__PURE__*/ defineChain({
-  id: 23351, // IMPORTANT : replace this with your sandbox's chain id
-  name: "BuildBear x Polygon Mainnet Sandbox", // name your network
-  nativeCurrency: { name: "MATIC", symbol: "MATIC", decimals: 18 }, // native currency of forked network
+  id: 23543, // IMPORTANT : replace this with your sandbox's chain id
+  name: "BuildBear x Ethereum Mainnet Sandbox", // name your network
+  nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 }, // native currency of forked network
   rpcUrls: {
     default: {
       http: [buildbearSandboxUrl],
@@ -35,9 +128,9 @@ const BBSandboxNetwork = /*#__PURE__*/ defineChain({
   },
   blockExplorers: {
     default: {
-      name: "BuildBear x Polygon Mainnet Scan", // block explorer for network
-      url: "https://explorer.buildbear.io/uzair",
-      apiUrl: "https://api.buildbear.io/uzair/api",
+      name: "BuildBear x Ethereum Mainnet Scan", // block explorer for network
+      url: "https://explorer.buildbear.io/historic-vulture-330d1a82",
+      apiUrl: "https://api.buildbear.io/historic-vulture-330d1a82/api",
     },
   },
 });
@@ -107,22 +200,10 @@ console.log("====================================");
 console.log(
   "-------- UserOp to Swap DAI to USDC on Uniswap V3 with Alto ---------"
 );
-console.log("🟠Balance before transaction: ", formatEther(balance));
-console.log("🟠DAI Balance before transaction: ", daiBalanceBefore);
-console.log("🟠USDC Balance before transaction: ", usdcBalanceBefore);
+console.log("🟠 Balance before transaction: ", formatEther(balance));
+console.log("🟠 DAI Balance before transaction: ", daiBalanceBefore);
+console.log("🟠 USDC Balance before transaction: ", usdcBalanceBefore);
 console.log("====================================");
-
-let swapParams = {
-  tokenIn: "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063" as `0x${string}`, // DAI
-  tokenOut: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174" as `0x${string}`, // USDC
-  fee: 3000 as number, //fee
-  recipient: account.address, // recipient
-  deadline: (Math.floor(Date.now() / 1000) + 60 * 30) as unknown as bigint, // expiration
-  amountIn: parseEther("1") as bigint, //amountIn
-  amountOutMinimum: 0 as unknown as bigint, //amountOutMinimum
-  sqrtPriceLimitX96: 0 as unknown as bigint, //sqrtPriceLimitX96
-  v3Router: "0xE592427A0AEce92De3Edee1F18E0157C05861564" as `0x${string}`,
-};
 
 console.log("🟠 Approving DAI....");
 console.log("====================================");
@@ -130,29 +211,39 @@ console.log("====================================");
 const txHash = await smartAccountClient.sendUserOperation({
   account,
   calls: [
+    // First approve DAI
     {
-      to: "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063" as `0x${string}`, //DAI
-      abi: parseAbi(["function approve(address,uint)"]),
-      functionName: "approve",
-      args: [swapParams.v3Router, parseEther("1")],
-    },
-    {
-      to: swapParams.v3Router, //UniV3 Router
+      to: DAI_MAINNET,
       abi: parseAbi([
-        "function exactInputSingle((address, address , uint24 , address , uint256 , uint256 , uint256 , uint160)) external payable returns (uint256 amountOut)",
+        "function approve(address spender, uint256 amount) external returns (bool)",
       ]),
-      functionName: "exactInputSingle",
+      functionName: "approve",
+      args: [swapParams.v4UniversalRouter, swapParams.amountIn],
+    },
+    // Then approve with Permit2
+    {
+      to: swapParams.v4UniversalRouter,
+      abi: parseAbi([
+        "function approveTokenWithPermit2(address token, uint160 amount, uint48 expiration) external",
+      ]),
+      functionName: "approveTokenWithPermit2",
       args: [
-        [
-          swapParams.tokenIn,
-          swapParams.tokenOut,
-          swapParams.fee,
-          swapParams.recipient,
-          swapParams.deadline,
-          swapParams.amountIn,
-          swapParams.amountOutMinimum,
-          swapParams.sqrtPriceLimitX96,
-        ],
+        DAI_MAINNET,
+        swapParams.amountIn,
+        Math.floor(Date.now() / 1000) + 60 * 3,
+      ],
+    },
+    // Execute the swap
+    {
+      to: swapParams.v4UniversalRouter,
+      abi: parseAbi([
+        "function execute(bytes commands, bytes[] inputs, uint256 deadline) external payable",
+      ]),
+      functionName: "execute",
+      args: [
+        commands_packed,
+        inputs,
+        (Math.floor(Date.now() / 1000) + 60 * 4) as unknown as bigint,
       ],
     },
   ],
@@ -166,7 +257,7 @@ let { receipt } = await smartAccountClient.waitForUserOperationReceipt({
 });
 
 console.log(
-  `🟢User operation included: https://explorer.buildbear.io/uzair/tx/${receipt.transactionHash}`
+  `🟢User operation included: https://explorer.buildbear.io/historic-vulture-330d1a82/tx/${receipt.transactionHash}`
 );
 
 balance = await publicClient.getBalance({ address: account.address }); // Get the balance of the sender
@@ -190,21 +281,34 @@ exit();
 // get USDC Balance of Smart Account
 async function getUSDCBalance(): Promise<string> {
   let res = await publicClient.readContract({
-    address: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+    address: USDC_MAINNET,
     abi: ERC20Abi,
     functionName: "balanceOf",
     args: [account.address],
   });
+  console.log("====================================");
+  console.log(
+    "USDC Balance in ether: ",
+    formatUnits(res as bigint, 6).toString()
+  );
+  console.log("====================================");
   return formatUnits(res as bigint, 6).toString();
 }
 
-// get DAI Balance of Smart Account
+// get  DAI Balance of Smart Account
 async function getDAIBalance(): Promise<string> {
   let res = await publicClient.readContract({
-    address: "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063",
+    address: DAI_MAINNET,
     abi: ERC20Abi,
     functionName: "balanceOf",
     args: [account.address],
   });
+  console.log("====================================");
+  console.log(
+    "DAI Balance in ether: ",
+    formatUnits(res as bigint, 18).toString()
+  );
+  console.log("====================================");
+
   return formatUnits(res as bigint, 18).toString();
 }
