@@ -235,28 +235,26 @@ const txHash = await smartAccountClient.sendUserOperation({
   account,
   calls: [
     // First approve DAI
-    // {
-    //   to: DAI_MAINNET,
-    //   abi: parseAbi([
-    //     "function approve(address spender, uint256 amount) external returns (bool)",
-    //   ]),
-    //   functionName: "approve",
-    //   args: [swapParams.permit2Address, swapParams.amountIn],
-    // },
+    {
+      to: DAI_MAINNET,
+      abi: ERC20Abi,
+      functionName: "approve",
+      args: [swapParams.permit2Address, swapParams.amountIn],
+    },
     // Then approve with Permit2
-    // {
-    //   to: swapParams.permit2Address,
-    //   abi: parseAbi([
-    //     "function approve(address token, address spender, uint160 amount, uint48 expiration)",
-    //   ]),
-    //   functionName: "approve",
-    //   args: [
-    //     DAI_MAINNET,
-    //     swapParams.v4UniversalRouter,
-    //     swapParams.amountIn,
-    //     swapParams.deadline as number,
-    //   ],
-    // },
+    {
+      to: swapParams.permit2Address,
+      abi: parseAbi([
+        "function approve(address token, address spender, uint160 amount, uint48 expiration)",
+      ]),
+      functionName: "approve",
+      args: [
+        DAI_MAINNET,
+        swapParams.v4UniversalRouter,
+        swapParams.amountIn,
+        swapParams.deadline as number,
+      ],
+    },
     // // Execute the swap
     {
       to: swapParams.v4UniversalRouter,
