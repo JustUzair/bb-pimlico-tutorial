@@ -22,10 +22,11 @@ import UniV3Abi from "./utils/ABIs/UniswapV3.json";
 import ERC20Abi from "./utils/ABIs/ERC20.json";
 import { readContract } from "viem/actions";
 
-const buildbearSandboxUrl = "https://rpc.buildbear.io/uzair";
+const buildbearSandboxUrl =
+  "https://rpc.buildbear.io/disturbed-bedlam-1060488b";
 
 const BBSandboxNetwork = /*#__PURE__*/ defineChain({
-  id: 23351, // IMPORTANT : replace this with your sandbox's chain id
+  id: 23645, // IMPORTANT : replace this with your sandbox's chain id
   name: "BuildBear x Polygon Mainnet Sandbox", // name your network
   nativeCurrency: { name: "MATIC", symbol: "MATIC", decimals: 18 }, // native currency of forked network
   rpcUrls: {
@@ -36,8 +37,8 @@ const BBSandboxNetwork = /*#__PURE__*/ defineChain({
   blockExplorers: {
     default: {
       name: "BuildBear x Polygon Mainnet Scan", // block explorer for network
-      url: "https://explorer.buildbear.io/uzair",
-      apiUrl: "https://api.buildbear.io/uzair/api",
+      url: "https://explorer.buildbear.io/disturbed-bedlam-1060488b",
+      apiUrl: "https://api.buildbear.io/disturbed-bedlam-1060488b/api",
     },
   },
 });
@@ -166,7 +167,7 @@ let { receipt } = await smartAccountClient.waitForUserOperationReceipt({
 });
 
 console.log(
-  `🟢User operation included: https://explorer.buildbear.io/uzair/tx/${receipt.transactionHash}`
+  `🟢User operation included: https://explorer.buildbear.io/disturbed-bedlam-1060488b/tx/${receipt.transactionHash}`
 );
 
 balance = await publicClient.getBalance({ address: account.address }); // Get the balance of the sender
