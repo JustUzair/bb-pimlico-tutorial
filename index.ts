@@ -9,18 +9,14 @@ import {
   formatUnits,
   http,
   parseAbi,
-  parseUnits,
 } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { createPimlicoClient } from "permissionless/clients/pimlico";
 import { entryPoint07Address } from "viem/account-abstraction";
 import { createSmartAccountClient } from "permissionless";
-import { ethers, Interface, Wallet, JsonRpcProvider, parseEther } from "ethers";
-
+import { parseEther } from "ethers";
 import { exit } from "process";
-import UniV3Abi from "./utils/ABIs/UniswapV3.json";
 import ERC20Abi from "./utils/ABIs/ERC20.json";
-import { readContract } from "viem/actions";
 
 const buildbearSandboxUrl =
   "https://rpc.buildbear.io/disturbed-bedlam-1060488b";
@@ -118,7 +114,7 @@ let swapParams = {
   tokenOut: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174" as `0x${string}`, // USDC
   fee: 3000 as number, //fee
   recipient: account.address, // recipient
-  deadline: (Math.floor(Date.now() / 1000) + 60 * 30) as unknown as bigint, // expiration
+  deadline: (Math.floor(Date.now() / 1000) + 60 * 2) as unknown as bigint, // expiration
   amountIn: parseEther("1") as bigint, //amountIn
   amountOutMinimum: 0 as unknown as bigint, //amountOutMinimum
   sqrtPriceLimitX96: 0 as unknown as bigint, //sqrtPriceLimitX96
