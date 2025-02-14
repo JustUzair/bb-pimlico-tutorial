@@ -65,7 +65,7 @@ const params: `0x${string}`[] = [];
 params[0] = encodeAbiParameters(
   parseAbiParameters([
     // Using exact struct format from docs
-    "((address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) poolKey, bool zeroForOne, uint128 amountIn, uint128 amountOutMinimum,uint160 sqrtPriceLimitX96, bytes hookData)",
+    "((address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) poolKey, bool zeroForOne, uint128 amountIn, uint128 amountOutMinimum, bytes hookData)",
   ]),
   [
     {
@@ -79,7 +79,6 @@ params[0] = encodeAbiParameters(
       zeroForOne: true,
       amountIn: swapParams.amountIn,
       amountOutMinimum: swapParams.minAmountOut,
-      sqrtPriceLimitX96: 0 as unknown as bigint,
       hookData: "" as `0x${string}`,
     },
   ]
