@@ -7,7 +7,7 @@ npm install
 npm start
 ```
 
-# Output for Swapping DAI to USDC on Uniswap V3 with Alto Bundler & BuildBear Sandbox
+# Output for Swapping DAI to USDT on Uniswap V3 with Alto Bundler, ERC20 Paymaster & BuildBear Sandbox
 
 ```bash
 $ npm start
@@ -22,14 +22,21 @@ $ npm start
 Smart Account Address: 0xa03Af1e5A78F70d8c7aCDb0ddaa2731E4A56E8FB
 ====================================
 ====================================
--------- UserOp to Swap DAI to USDC on Uniswap V3 with Alto ---------
-🟠Balance before transaction:  194.996633374957401338
-🟠DAI Balance before transaction:  30000000194
-🟠USDC Balance before transaction:  300.99521
+-------- UserOp to Swap DAI to USDT on Uniswap V3 with Alto ---------
+🟠 Balance before transaction:  100.99956781271324068
+🟠 DAI Balance before transaction:  85.99999999999986006
+🟠 USDT Balance before transaction:  14.970922
 ====================================
-🟢User operation included: https://explorer.buildbear.io/uzair/tx/0x24460661e2b44e6596758aef6e97fdbc9c57801504c196849e863c7c89febe33
-🟢 Balance after transaction:  194.996344530955090602
-🟢 DAI Balance after transaction:  30000000193
-🟢 USDC Balance after transaction:  301.990336
-Swapped 1 DAI to 0.9951260000000275 USDC
+🟠 Approving DAI....
+====================================
+🟠 Calculating UserOp Cost in DAI....
+====================================
+🟠 Swapping DAI....
+🟢User operation included: https://explorer.dev.buildbear.io/uzair/tx/0x9ea4bc26e6af350aee9fc384a6704bcd87c91aeda0bd3c368f07b6fefb18847d
+🟢 Yay!! 🎉🎉 Swapped 1 DAI to 0.9979220000000009 USDT
+🟢 Balance after transaction:  100.99956781271324068
+🟢 DAI Balance after transaction:  84.999999999999848441
+🟢 USDT Balance after transaction:  15.968844
+🟢 Max DAI Estimate for UserOp:  1.056731379494445588
+🟢 DAI charged for UserOp:  0.000000000000014211
 ```
