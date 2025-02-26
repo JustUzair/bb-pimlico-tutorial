@@ -87,7 +87,7 @@ let balance = await publicClient.getBalance({ address: account.address }); // Ge
 let daiBalanceBefore = await getDAIBalance();
 let usdtBalanceBefore = await getUSDTBalance();
 
-if (+balance.toString() <= 0 || +daiBalanceBefore.toString() <= 0) {
+if (+daiBalanceBefore.toString() <= 0) {
   console.log("====================================");
   console.log(
     `⚠️⚠️Fund your Account with DAI & NATIVE tokens from your BuildBear Sandbox Faucet and try running the script again.\nSmart Account Address: ${account.address}`
