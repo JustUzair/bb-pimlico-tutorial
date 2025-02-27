@@ -90,7 +90,7 @@ let usdtBalanceBefore = await getUSDTBalance();
 if (+daiBalanceBefore.toString() <= 0) {
   console.log("====================================");
   console.log(
-    `⚠️⚠️Fund your Account with DAI & NATIVE tokens from your BuildBear Sandbox Faucet and try running the script again.\nSmart Account Address: ${account.address}`
+    `⚠️⚠️Fund your Account with DAI tokens from your BuildBear Sandbox Faucet and try running the script again.\nSmart Account Address: ${account.address}`
   );
   console.log("====================================");
   exit();
@@ -128,11 +128,17 @@ console.log("🟠 Approving DAI....");
 console.log("====================================");
 
 console.log("🟠 Calculating UserOp Cost in DAI....");
+
+// Get quotes for tokens in array on given network
 const quotes = await pimlicoClient.getTokenQuotes({
   chain: BBSandboxNetwork,
   tokens: [swapParams.tokenIn],
 });
+
+// extract post op gas, exchange rate and paymaster from quotes
 const { postOpGas, exchangeRate, paymaster } = quotes[0];
+
+// prepare user operation & calculating the estimate
 const userOperation: UserOperation<"0.7"> =
   await smartAccountClient.prepareUserOperation({
     calls: [
@@ -163,6 +169,8 @@ const userOperation: UserOperation<"0.7"> =
       },
     ],
   });
+
+// calculate max cost in token
 const userOperationMaxGas =
   userOperation.preVerificationGas +
   userOperation.callGasLimit +
@@ -170,6 +178,7 @@ const userOperationMaxGas =
   (userOperation.paymasterPostOpGasLimit || 0n) +
   (userOperation.paymasterVerificationGasLimit || 0n);
 
+// calculate max cost in token
 const userOperationMaxCost = userOperationMaxGas * userOperation.maxFeePerGas;
 
 // using formula here https://github.com/pimlicolabs/singleton-paymaster/blob/main/src/base/BaseSingletonPaymaster.sol#L334-L341
