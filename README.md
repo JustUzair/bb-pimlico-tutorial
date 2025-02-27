@@ -3,6 +3,8 @@
 To set up the tutorial, clone this repository, run install the dependencies, and run `npm start`!
 
 ```bash
+git clone https://github.com/JustUzair/bb-pimlico-tutorial.git
+git checkout univ3-paymaster
 npm install
 npm start
 ```
