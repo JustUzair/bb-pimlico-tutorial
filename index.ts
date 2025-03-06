@@ -126,68 +126,6 @@ let swapParams = {
 
 console.log("🟠 Approving DAI....");
 console.log("====================================");
-
-console.log("🟠 Calculating UserOp Cost in DAI....");
-
-// Get quotes for tokens in array on given network
-const quotes = await pimlicoClient.getTokenQuotes({
-  chain: BBSandboxNetwork,
-  tokens: [swapParams.tokenIn],
-});
-
-// extract post op gas, exchange rate and paymaster from quotes
-const { postOpGas, exchangeRate, paymaster } = quotes[0];
-
-// prepare user operation & calculating the estimate
-const userOperation: UserOperation<"0.7"> =
-  await smartAccountClient.prepareUserOperation({
-    calls: [
-      {
-        to: "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063" as `0x${string}`, //DAI
-        abi: parseAbi(["function approve(address,uint)"]),
-        functionName: "approve",
-        args: [swapParams.v3Router, parseEther("1")],
-      },
-      {
-        to: swapParams.v3Router, //UniV3 Router
-        abi: parseAbi([
-          "function exactInputSingle((address, address , uint24 , address , uint256 , uint256 , uint256 , uint160)) external payable returns (uint256 amountOut)",
-        ]),
-        functionName: "exactInputSingle",
-        args: [
-          [
-            swapParams.tokenIn,
-            swapParams.tokenOut,
-            swapParams.fee,
-            swapParams.recipient,
-            swapParams.deadline,
-            swapParams.amountIn,
-            swapParams.amountOutMinimum,
-            swapParams.sqrtPriceLimitX96,
-          ],
-        ],
-      },
-    ],
-  });
-
-// calculate max cost in token
-const userOperationMaxGas =
-  userOperation.preVerificationGas +
-  userOperation.callGasLimit +
-  userOperation.verificationGasLimit +
-  (userOperation.paymasterPostOpGasLimit || 0n) +
-  (userOperation.paymasterVerificationGasLimit || 0n);
-
-// calculate max cost in token
-const userOperationMaxCost = userOperationMaxGas * userOperation.maxFeePerGas;
-
-// using formula here https://github.com/pimlicolabs/singleton-paymaster/blob/main/src/base/BaseSingletonPaymaster.sol#L334-L341
-const maxCostInToken =
-  ((userOperationMaxCost + postOpGas * userOperation.maxFeePerGas) *
-    exchangeRate) /
-  BigInt(1e18);
-console.log("====================================");
-
 const txHash = await smartAccountClient.sendUserOperation({
   account,
   calls: [
@@ -243,11 +181,6 @@ console.log(
 console.log("🟢 Balance after transaction: ", formatEther(balance));
 console.log("🟢 DAI Balance after transaction: ", daiBalanceAfter);
 console.log("🟢 USDT Balance after transaction: ", usdtBalanceAfter);
-console.log("🟢 Max DAI Estimate for UserOp: ", formatEther(maxCostInToken));
-console.log(
-  "🟢 DAI charged for UserOp: ",
-  (+daiBalanceBefore - +daiBalanceAfter - 1).toFixed(18).replace(/\.?0+$/, "") // Adjust decimal places as needed
-);
 
 exit();
 
