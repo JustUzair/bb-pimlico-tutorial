@@ -18,10 +18,10 @@ import { parseEther } from "ethers";
 import { exit } from "process";
 import ERC20Abi from "./utils/ABIs/ERC20.json";
 
-const buildbearSandboxUrl = "https://rpc.dev.buildbear.io/uzair";
+const buildbearSandboxUrl = "https://rpc.dev.buildbear.io/sticky-clea-edd665b2";
 
 const BBSandboxNetwork = /*#__PURE__*/ defineChain({
-  id: 11476, // IMPORTANT : replace this with your sandbox's chain id
+  id: 11480, // IMPORTANT : replace this with your sandbox's chain id
   name: "BuildBear x Polygon Mainnet Sandbox", // name your network
   nativeCurrency: { name: "BBETH", symbol: "BBETH", decimals: 18 }, // native currency of forked network
   rpcUrls: {
@@ -32,8 +32,8 @@ const BBSandboxNetwork = /*#__PURE__*/ defineChain({
   blockExplorers: {
     default: {
       name: "BuildBear x Polygon Mainnet Scan", // block explorer for network
-      url: "https://explorer.dev.buildbear.io/uzair",
-      apiUrl: "https://api.dev.buildbear.io/uzair/api",
+      url: "https://explorer.dev.buildbear.io/sticky-clea-edd665b2",
+      apiUrl: "https://api.dev.buildbear.io/sticky-clea-edd665b2/api",
     },
   },
 });
@@ -195,12 +195,6 @@ const txHash = await smartAccountClient.sendUserOperation({
       to: "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063" as `0x${string}`, //DAI
       abi: parseAbi(["function approve(address,uint)"]),
       functionName: "approve",
-      args: [swapParams.paymasterV7Address, maxCostInToken],
-    },
-    {
-      to: "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063" as `0x${string}`, //DAI
-      abi: parseAbi(["function approve(address,uint)"]),
-      functionName: "approve",
       args: [swapParams.v3Router, parseEther("1")],
     },
     {
@@ -223,9 +217,6 @@ const txHash = await smartAccountClient.sendUserOperation({
       ],
     },
   ],
-  paymasterContext: {
-    token: swapParams.tokenIn,
-  },
 });
 console.log("🟠 Swapping DAI....");
 
@@ -236,7 +227,7 @@ let { receipt } = await smartAccountClient.waitForUserOperationReceipt({
 });
 
 console.log(
-  `🟢User operation included: https://explorer.dev.buildbear.io/uzair/tx/${receipt.transactionHash}`
+  `🟢User operation included: https://explorer.dev.buildbear.io/sticky-clea-edd665b2/tx/${receipt.transactionHash}`
 );
 
 balance = await publicClient.getBalance({ address: account.address }); // Get the balance of the sender
