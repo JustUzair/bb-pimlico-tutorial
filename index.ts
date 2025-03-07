@@ -120,8 +120,6 @@ let swapParams = {
   amountOutMinimum: 0 as unknown as bigint, //amountOutMinimum
   sqrtPriceLimitX96: 0 as unknown as bigint, //sqrtPriceLimitX96
   v3Router: "0xE592427A0AEce92De3Edee1F18E0157C05861564" as `0x${string}`,
-  paymasterV7Address:
-    "0x0000000000000039cd5e8ae05257ce51c473ddd1" as `0x${string}`,
 };
 
 console.log("🟠 Approving DAI....");
