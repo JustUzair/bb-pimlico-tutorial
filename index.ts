@@ -254,8 +254,9 @@ console.log("🟢 DAI Balance after transaction: ", daiBalanceAfter);
 console.log("🟢 USDT Balance after transaction: ", usdtBalanceAfter);
 console.log("🟢 Max DAI Estimate for UserOp: ", formatEther(maxCostInToken));
 console.log(
-  "🟢 DAI charged for UserOp: ",
-  (+daiBalanceBefore - +daiBalanceAfter - 1).toFixed(18).replace(/\.?0+$/, "") // Adjust decimal places as needed
+  `🟢 DAI charged for UserOp: ~${(+daiBalanceBefore - +daiBalanceAfter - 1)
+    .toFixed(18)
+    .replace(/\.?0+$/, "")}` // Adjust decimal places as needed
 );
 
 exit();
