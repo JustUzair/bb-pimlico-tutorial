@@ -23,7 +23,7 @@ import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { createPimlicoClient } from "permissionless/clients/pimlico";
 import { entryPoint07Address, UserOperation } from "viem/account-abstraction";
 import { createSmartAccountClient } from "permissionless";
-import { parseEther } from "ethers";
+import { parseEther, parseUnits } from "ethers";
 import { exit } from "process";
 import { simulateContract, writeContract } from "viem/actions";
 
@@ -103,7 +103,7 @@ let usdtBalanceBefore = await getUSDTBalance();
 if (+daiBalanceBefore.toString() <= 0) {
   console.log("====================================");
   console.log(
-    `⚠️⚠️Fund your Account with DAI tokens from your BuildBear Sandbox Faucet and try running the script again.\nSmart Account Address: ${account.address}\n`
+    `⚠️⚠️Fund your Account with DAI tokens from your BuildBear Sandbox Faucet and try running the script again.\nSmart Account Address: ${account.address}\nSigner Address: ${signer.address}\n`
   );
   console.log("====================================");
   exit();
@@ -125,44 +125,6 @@ console.log("🟠 DAI Balance before transaction: ", daiBalanceBefore);
 console.log("🟠 USDT Balance before transaction: ", usdtBalanceBefore);
 console.log("====================================");
 
-// export const overWritePaymasterSigner = async () => {
-//   //   logger.info("Overwriting paymaster signer");
-//   const Client = createTestClient({
-//     chain: BBSandboxNetwork,
-//     mode: "hardhat",
-//     transport: http(),
-//   });
-//   console.log(
-//     ` Before
-//     ${await publicClient.getBalance({
-//       address: swapParams.paymasterV7Address,
-//     })}`
-//   );
-//   await Client.request({
-//     method: "hardhat_setBalance",
-//     params: [swapParams.paymasterV7Address, parseEther("1000")],
-//   });
-//   console.log(
-//     ` After
-//     ${await publicClient.getBalance({
-//       address: swapParams.paymasterV7Address,
-//     })}`
-//   );
-//   const paymasterSigner = privateKeyToAccount(privateKey);
-//   const paymasterAddresses = [swapParams.paymasterV7Address];
-//   let mappingKey = keccak256(
-//     concat([pad(paymasterSigner.address), pad("0x1")])
-//   );
-
-//   for (const paymasterAddress of paymasterAddresses) {
-//     await Client.setStorageAt({
-//       address: `0x${paymasterAddress.replace("0x", "")}`,
-//       index: mappingKey,
-//       value: pad("0x1"),
-//     });
-//   }
-// };
-
 const swapParams = {
   tokenIn: "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063" as `0x${string}`, // DAI
   tokenOut: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F" as `0x${string}`, // USDT
@@ -178,11 +140,8 @@ const swapParams = {
 };
 
 async function overrideDeposit(paymaster: any) {
-  const account = privateKeyToAccount(privateKey);
-
-  // 2. Create a Wallet Client
   const client = createWalletClient({
-    account,
+    account: signer,
     chain: BBSandboxNetwork, // or any other chain like goerli, polygon, etc.
     transport: http(buildbearSandboxUrl),
   });
@@ -346,10 +305,16 @@ console.log("🟢 Balance after transaction: ", formatEther(balance));
 console.log("🟢 DAI Balance after transaction: ", daiBalanceAfter);
 console.log("🟢 USDT Balance after transaction: ", usdtBalanceAfter);
 console.log("🟢 Max DAI Estimate for UserOp: ", formatEther(maxCostInToken));
+
 console.log(
-  `🟢 DAI charged for UserOp: ~${(+daiBalanceBefore - +daiBalanceAfter - 1)
-    .toFixed(18)
-    .replace(/\.?0+$/, "")}` // Adjust decimal places as needed
+  `🟢 DAI charged for UserOp: ~${formatUnits(
+    (
+      BigInt(parseUnits(daiBalanceBefore, 18)) -
+      BigInt(parseUnits(daiBalanceAfter, 18)) -
+      BigInt(parseUnits(`1`, 18))
+    ).toString(),
+    18
+  )}`
 );
 
 exit();
