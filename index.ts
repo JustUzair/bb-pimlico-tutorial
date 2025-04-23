@@ -3,25 +3,37 @@ import { appendFileSync } from "fs";
 import { toSafeSmartAccount } from "permissionless/accounts";
 import {
   Hex,
+  concat,
   createPublicClient,
   defineChain,
   formatEther,
   formatUnits,
   http,
+  keccak256,
+  maxUint256,
+  pad,
   parseAbi,
+  createTestClient,
+  createWalletClient,
+  toHex,
+  getContract,
 } from "viem";
+
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { createPimlicoClient } from "permissionless/clients/pimlico";
 import { entryPoint07Address, UserOperation } from "viem/account-abstraction";
 import { createSmartAccountClient } from "permissionless";
 import { parseEther } from "ethers";
 import { exit } from "process";
+import { simulateContract, writeContract } from "viem/actions";
+
+import SingletonPaymasterAbi from "./utils/ABIs/SingletonPaymaster.json";
 import ERC20Abi from "./utils/ABIs/ERC20.json";
 
-const buildbearSandboxUrl = "https://rpc.dev.buildbear.io/sticky-clea-edd665b2";
+const buildbearSandboxUrl = "https://rpc.buildbear.io/pretty-medusa-192c3f8e";
 
 const BBSandboxNetwork = /*#__PURE__*/ defineChain({
-  id: 11480, // IMPORTANT : replace this with your sandbox's chain id
+  id: 137, // IMPORTANT : replace this with your sandbox's chain id
   name: "BuildBear x Polygon Mainnet Sandbox", // name your network
   nativeCurrency: { name: "BBETH", symbol: "BBETH", decimals: 18 }, // native currency of forked network
   rpcUrls: {
@@ -32,8 +44,8 @@ const BBSandboxNetwork = /*#__PURE__*/ defineChain({
   blockExplorers: {
     default: {
       name: "BuildBear x Polygon Mainnet Scan", // block explorer for network
-      url: "https://explorer.dev.buildbear.io/sticky-clea-edd665b2",
-      apiUrl: "https://api.dev.buildbear.io/sticky-clea-edd665b2/api",
+      url: "https://explorer.buildbear.io/pretty-medusa-192c3f8e",
+      apiUrl: "https://api.buildbear.io/pretty-medusa-192c3f8e/api",
     },
   },
 });
@@ -60,6 +72,7 @@ const pimlicoClient = createPimlicoClient({
 });
 
 const signer = privateKeyToAccount(privateKey);
+
 const account = await toSafeSmartAccount({
   client: publicClient,
   owners: [signer],
@@ -90,13 +103,15 @@ let usdtBalanceBefore = await getUSDTBalance();
 if (+daiBalanceBefore.toString() <= 0) {
   console.log("====================================");
   console.log(
-    `⚠️⚠️Fund your Account with DAI tokens from your BuildBear Sandbox Faucet and try running the script again.\nSmart Account Address: ${account.address}`
+    `⚠️⚠️Fund your Account with DAI tokens from your BuildBear Sandbox Faucet and try running the script again.\nSmart Account Address: ${account.address}\n`
   );
   console.log("====================================");
   exit();
 } else {
   console.log("====================================");
   console.log(`Smart Account Address: ${account.address}`);
+  console.log(`Signer Address: ${signer.address}`);
+
   console.log("====================================");
 }
 
@@ -110,7 +125,45 @@ console.log("🟠 DAI Balance before transaction: ", daiBalanceBefore);
 console.log("🟠 USDT Balance before transaction: ", usdtBalanceBefore);
 console.log("====================================");
 
-let swapParams = {
+// export const overWritePaymasterSigner = async () => {
+//   //   logger.info("Overwriting paymaster signer");
+//   const Client = createTestClient({
+//     chain: BBSandboxNetwork,
+//     mode: "hardhat",
+//     transport: http(),
+//   });
+//   console.log(
+//     ` Before
+//     ${await publicClient.getBalance({
+//       address: swapParams.paymasterV7Address,
+//     })}`
+//   );
+//   await Client.request({
+//     method: "hardhat_setBalance",
+//     params: [swapParams.paymasterV7Address, parseEther("1000")],
+//   });
+//   console.log(
+//     ` After
+//     ${await publicClient.getBalance({
+//       address: swapParams.paymasterV7Address,
+//     })}`
+//   );
+//   const paymasterSigner = privateKeyToAccount(privateKey);
+//   const paymasterAddresses = [swapParams.paymasterV7Address];
+//   let mappingKey = keccak256(
+//     concat([pad(paymasterSigner.address), pad("0x1")])
+//   );
+
+//   for (const paymasterAddress of paymasterAddresses) {
+//     await Client.setStorageAt({
+//       address: `0x${paymasterAddress.replace("0x", "")}`,
+//       index: mappingKey,
+//       value: pad("0x1"),
+//     });
+//   }
+// };
+
+const swapParams = {
   tokenIn: "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063" as `0x${string}`, // DAI
   tokenOut: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F" as `0x${string}`, // USDT
   fee: 3000 as number, //fee
@@ -123,6 +176,32 @@ let swapParams = {
   paymasterV7Address:
     "0x0000000000000039cd5e8ae05257ce51c473ddd1" as `0x${string}`,
 };
+
+async function overrideDeposit(paymaster: any) {
+  const account = privateKeyToAccount(privateKey);
+
+  // 2. Create a Wallet Client
+  const client = createWalletClient({
+    account,
+    chain: BBSandboxNetwork, // or any other chain like goerli, polygon, etc.
+    transport: http(buildbearSandboxUrl),
+  });
+  const singletonPaymaster = getContract({
+    address: paymaster,
+    abi: SingletonPaymasterAbi,
+    client: client,
+  });
+
+  await singletonPaymaster.write.deposit({
+    value: parseEther("500"),
+  });
+}
+
+overrideDeposit(swapParams.paymasterV7Address).catch(e => {
+  console.error(e);
+});
+
+// await overWritePaymasterSigner();
 
 console.log("🟠 Approving DAI....");
 console.log("====================================");
@@ -142,6 +221,13 @@ const { postOpGas, exchangeRate, paymaster } = quotes[0];
 const userOperation: UserOperation<"0.7"> =
   await smartAccountClient.prepareUserOperation({
     calls: [
+      {
+        to: swapParams.paymasterV7Address as `0x${string}`, //DAI
+        abi: parseAbi(["function deposit() payable"]),
+        functionName: "deposit",
+        args: [],
+        value: parseEther("1"),
+      },
       {
         to: "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063" as `0x${string}`, //DAI
         abi: parseAbi(["function approve(address,uint)"]),
@@ -192,6 +278,13 @@ const txHash = await smartAccountClient.sendUserOperation({
   account,
   calls: [
     {
+      to: swapParams.paymasterV7Address as `0x${string}`, //DAI
+      abi: parseAbi(["function deposit() payable"]),
+      functionName: "deposit",
+      args: [],
+      value: parseEther("1000"),
+    },
+    {
       to: "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063" as `0x${string}`, //DAI
       abi: parseAbi(["function approve(address,uint)"]),
       functionName: "approve",
@@ -236,7 +329,7 @@ let { receipt } = await smartAccountClient.waitForUserOperationReceipt({
 });
 
 console.log(
-  `🟢User operation included: https://explorer.dev.buildbear.io/sticky-clea-edd665b2/tx/${receipt.transactionHash}`
+  `🟢User operation included: https://explorer.buildbear.io/pretty-medusa-192c3f8e/tx/${receipt.transactionHash}`
 );
 
 balance = await publicClient.getBalance({ address: account.address }); // Get the balance of the sender
