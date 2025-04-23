@@ -237,13 +237,6 @@ const txHash = await smartAccountClient.sendUserOperation({
   account,
   calls: [
     {
-      to: swapParams.paymasterV7Address as `0x${string}`, //DAI
-      abi: parseAbi(["function deposit() payable"]),
-      functionName: "deposit",
-      args: [],
-      value: parseEther("1000"),
-    },
-    {
       to: "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063" as `0x${string}`, //DAI
       abi: parseAbi(["function approve(address,uint)"]),
       functionName: "approve",
